@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StyleAI — Персональный стилист</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-bottom: 1px solid #2a2a4a;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+    header .logo { font-size: 1.8rem; }
+    header .subtitle { font-size: 0.85rem; color: #888; margin-left: auto; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 32px;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #888;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: #6c63ff;
+      color: #fff;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed #333;
+      border-radius: 16px;
+      padding: 48px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #141414;
+      margin-bottom: 32px;
+    }
+
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: #6c63ff;
+      background: #1a1830;
+    }
+
+    .upload-zone .icon { font-size: 3rem; margin-bottom: 12px; }
+    .upload-zone h3 { font-size: 1.1rem; margin-bottom: 8px; }
+    .upload-zone p { color: #666; font-size: 0.85rem; }
+
+    #file-input { display: none; }
+
+    /* Progress */
+    .upload-progress {
+      display: none;
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .upload-progress.visible { display: flex; }
+
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #333;
+      border-top-color: #6c63ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Wardrobe grid */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-title { font-size: 1.1rem; font-weight: 600; }
+    .count-badge {
+      background: #2a2a3a;
+      color: #aaa;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+
+    .wardrobe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .item-card {
+      background: #1a1a1a;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #2a2a2a;
+      transition: transform 0.2s, border-color 0.2s;
+      position: relative;
+    }
+
+    .item-card:hover { transform: translateY(-2px); border-color: #444; }
+
+    .item-card img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      display: block;
+    }
+
+    .item-card .info {
+      padding: 10px 12px;
+    }
+
+    .item-card .category {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .item-card .meta {
+      font-size: 0.75rem;
+      color: #666;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .color-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid #444;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: rgba(0,0,0,0.7);
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .item-card:hover .delete-btn { opacity: 1; }
+
+    /* Gaps */
+    .gaps-section {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 20px 24px;
+      border: 1px solid #2a2a2a;
+      margin-bottom: 32px;
+    }
+
+    .gaps-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #aaa;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .gap-tip {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #222;
+      font-size: 0.85rem;
+      color: #ccc;
+    }
+
+    .gap-tip:last-child { border-bottom: none; }
+    .gap-tip .tip-icon { font-size: 1rem; flex-shrink: 0; }
+
+    /* Outfits */
+    .generate-btn {
+      background: linear-gradient(135deg, #6c63ff, #a855f7);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 32px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-bottom: 32px;
+    }
+
+    .generate-btn:hover { opacity: 0.9; }
+    .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .outfits-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .outfit-card {
+      background: #1a1a1a;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .outfit-card .outfit-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6c63ff;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .outfit-items {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .outfit-item-thumb {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid #333;
+    }
+
+    .outfit-desc {
+      font-size: 0.85rem;
+      color: #aaa;
+      line-height: 1.5;
+    }
+
+    .outfit-style-badge {
+      display: inline-block;
+      background: #2a2a3a;
+      color: #8888ff;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      margin-top: 10px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: #555;
+    }
+
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 0.875rem;
+      z-index: 1000;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s;
+      max-width: 360px;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: #22c55e; }
+    .toast.error { border-color: #ef4444; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">✨</span>
+  <h1>StyleAI</h1>
+  <span class="subtitle">Персональный стилист на базе ИИ</span>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('wardrobe')">👚 Гардероб</button>
+    <button class="tab-btn" onclick="switchTab('outfits')">🎨 Образы</button>
+  </div>
+
+  <!-- ГАРДЕРОБ -->
+  <div id="tab-wardrobe" class="tab-content active">
+
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📸</div>
+      <h3>Добавь вещь в гардероб</h3>
+      <p>Нажми или перетащи фото сюда · JPG, PNG, WEBP</p>
+      <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.webp" multiple />
+    </div>
+
+    <div class="upload-progress" id="upload-progress">
+      <div class="spinner"></div>
+      <span id="progress-text">Анализирую вещь с помощью ИИ...</span>
+    </div>
+
+    <div class="gaps-section" id="gaps-section" style="display:none">
+      <div class="gaps-title">💡 Что добавить в гардероб</div>
+      <div id="gaps-list"></div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">Мои вещи</span>
+      <span class="count-badge" id="items-count">0 вещей</span>
+    </div>
+
+    <div class="wardrobe-grid" id="wardrobe-grid">
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">👗</div>
+        <p>Гардероб пуст — добавь первую вещь</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ОБРАЗЫ -->
+  <div id="tab-outfits" class="tab-content">
+
+    <button class="generate-btn" id="generate-btn" onclick="generateOutfits()">
+      ✨ Создать образы
+    </button>
+
+    <div id="outfits-container">
+      <div class="empty-state">
+        <div class="empty-icon">🎨</div>
+        <p>Нажми кнопку, чтобы ИИ подобрал образы из твоего гардероба</p>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const COLOR_MAP = {
+    'белый': '#f5f5f5', 'чёрный': '#1a1a1a', 'серый': '#888',
+    'синий': '#3b82f6', 'красный': '#ef4444', 'зелёный': '#22c55e',
+    'бежевый': '#d4b896', 'коричневый': '#92400e', 'розовый': '#f9a8d4',
+    'жёлтый': '#fbbf24', 'оранжевый': '#f97316', 'бордовый': '#9f1239',
+    'фиолетовый': '#a855f7', 'голубой': '#7dd3fc',
+  };
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && tab === 'wardrobe') || (i === 1 && tab === 'outfits'));
+    });
+    document.getElementById('tab-wardrobe').classList.toggle('active', tab === 'wardrobe');
+    document.getElementById('tab-outfits').classList.toggle('active', tab === 'outfits');
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast show ${type}`;
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // Upload
+  const zone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('file-input');
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    uploadFiles(e.dataTransfer.files);
+  });
+
+  fileInput.addEventListener('change', () => uploadFiles(fileInput.files));
+
+  async function uploadFiles(files) {
+    for (const file of files) {
+      await uploadSingleFile(file);
+    }
+    loadWardrobe();
+    loadGaps();
+  }
+
+  async function uploadSingleFile(file) {
+    const progress = document.getElementById('upload-progress');
+    const progressText = document.getElementById('progress-text');
+    progress.classList.add('visible');
+    progressText.textContent = `Анализирую «${file.name}»...`;
+
+    const form = new FormData();
+    form.append('file', file);
+
+    try {
+      const res = await fetch('/wardrobe/upload', { method: 'POST', body: form });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Ошибка загрузки');
+      }
+      const data = await res.json();
+      showToast(`✅ ${data.category} добавлена в гардероб`);
+    } catch (e) {
+      showToast(`❌ ${e.message}`, 'error');
+    } finally {
+      progress.classList.remove('visible');
+      fileInput.value = '';
+    }
+  }
+
+  async function loadWardrobe() {
+    const res = await fetch('/wardrobe/items');
+    const items = await res.json();
+
+    const grid = document.getElementById('wardrobe-grid');
+    const countBadge = document.getElementById('items-count');
+    countBadge.textContent = `${items.length} ${declension(items.length, 'вещь', 'вещи', 'вещей')}`;
+
+    if (items.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-icon">👗</div>
+          <p>Гардероб пуст — добавь первую вещь</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = items.map(item => `
+      <div class="item-card" id="card-${item.id}">
+        <img src="/static/uploads/${item.filename}" alt="${item.category}" loading="lazy" />
+        <button class="delete-btn" onclick="deleteItem(${item.id})">✕</button>
+        <div class="info">
+          <div class="category">${item.category}</div>
+          <div class="meta">
+            <span style="display:flex;align-items:center;gap:4px">
+              <span class="color-dot" style="background:${COLOR_MAP[item.color] || '#666'}"></span>
+              ${item.color}
+            </span>
+            <span>${item.style}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function deleteItem(id) {
+    await fetch(`/wardrobe/items/${id}`, { method: 'DELETE' });
+    document.getElementById(`card-${id}`)?.remove();
+    loadGaps();
+    const items = document.querySelectorAll('.item-card');
+    const n = items.length;
+    document.getElementById('items-count').textContent = `${n} ${declension(n, 'вещь', 'вещи', 'вещей')}`;
+    if (n === 0) loadWardrobe();
+  }
+
+  async function loadGaps() {
+    const res = await fetch('/wardrobe/gaps');
+    const data = await res.json();
+    const section = document.getElementById('gaps-section');
+    const list = document.getElementById('gaps-list');
+
+    if (!data.tips || data.tips.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+    list.innerHTML = data.tips.map(tip => `
+      <div class="gap-tip">
+        <span class="tip-icon">🛍️</span>
+        <span>${tip}</span>
+      </div>
+    `).join('');
+  }
+
+  async function generateOutfits() {
+    const btn = document.getElementById('generate-btn');
+    const container = document.getElementById('outfits-container');
+    btn.disabled = true;
+    btn.textContent = '⏳ Подбираю образы...';
+    container.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto 16px"></div><p>ИИ анализирует твой гардероб...</p></div>';
+
+    try {
+      const res = await fetch('/outfits/generate');
+      const data = await res.json();
+
+      if (!data.outfits || data.outfits.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">👗</div><p>${data.message || 'Добавь больше вещей для генерации образов'}</p></div>`;
+        return;
+      }
+
+      container.innerHTML = `<div class="outfits-grid">${data.outfits.map((outfit, i) => `
+        <div class="outfit-card">
+          <div class="outfit-label">Образ ${i + 1}</div>
+          <div class="outfit-items">
+            ${outfit.items.map(item => `
+              <img class="outfit-item-thumb" src="/static/uploads/${item.filename}" alt="${item.category}" title="${item.category}" />
+            `).join('')}
+          </div>
+          <div class="outfit-desc">${outfit.description || ''}</div>
+          <span class="outfit-style-badge">${outfit.style}</span>
+        </div>
+      `).join('')}</div>`;
+
+    } catch (e) {
+      showToast('Ошибка генерации образов', 'error');
+      container.innerHTML = '<div class="empty-state"><p>Что-то пошло не так, попробуй снова</p></div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✨ Создать образы';
+    }
+  }
+
+  function declension(n, one, few, many) {
+    const mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return `${n} ${one}`;
+    if ([2,3,4].includes(mod10) && ![12,13,14].includes(mod100)) return `${n} ${few}`;
+    return `${n} ${many}`;
+  }
+
+  loadWardrobe();
+  loadGaps();
+</script>
+</body>
+</html>
