@@ -6,13 +6,13 @@
 
 ## Проблема
 
-Большинство людей не знают, как сочетать вещи, которые уже есть в шкафу.
+**Люди тратят время каждый день.** Женщины тратят в среднем **17 минут** каждое утро на выбор образа, мужчины — **13 минут**. ([Marks & Spencer, via LinkedIn](https://www.linkedin.com/pulse/17-minutes-choose-outfit-how-you-should-start-your-my-che-hashim))
 
-**В России:** по данным исследования Movinga (18 000 домохозяйств в 20 странах), россияне не надевали **53% вещей** из своего гардероба в течение года — и это один из лучших показателей в мире. ([FashionUnited, 2018](https://fashionunited.ru/novostee/moda/lyudi-ne-nosyat-polovinu-veschej-v-svoem-garderobe-issledovanie/2018082122914))
+**Люди покупают вещи, которые не носят.** 40% потребителей признают, что покупали одежду, которую так и не надели. В среднем у человека лежит одежды на **$300, которую он никогда не носил**. ([Statista](https://www.statista.com/chart/31299/consumers-buy-more-clothes-than-they-need/), [StudyFinds](https://studyfinds.org/people-spend-hundreds-of-dollars-on-clothes-they-will-never-wear-new-survey-finds/))
 
-**В мире:** в Великобритании не используется **73% гардероба**, в Канаде и Швейцарии — **79%**, в Бельгии — **88%**. Средняя вещь надевается всего **7 раз** перед утилизацией. ([WRAP](https://www.wrap.ngo/media-centre/press-releases/nations-wardrobes-hold-16-billion-items-unworn-clothes-people-open-new), [FashionUnited UK](https://fashionunited.uk/news/fashion/people-do-not-wear-at-least-50-percent-of-their-wardrobes-according-to-study/2018081638356))
+**Стилист — не для всех.** Профессиональная консультация стоит дорого, требует времени на запись и личного взаимодействия. Многие не готовы обсуждать свой гардероб с незнакомым человеком — это личное.
 
-Проблема не в том, что вещей мало — а в том, что непонятно как их комбинировать. Существующие решения (Pinterest, IKEA AR) дают вдохновение, но не работают с твоим реальным гардеробом.
+StyleAI решает всё это: загрузил фото вещей — получил готовые образы за секунды, без стилиста, без записи, без лишних разговоров.
 
 ## Решение
 
@@ -111,4 +111,4 @@ python3 -m uvicorn main:app --reload
 
 ## Авторы
 
-Проект создан в рамках питч-конкурса, 2026.
+Букреев Сергей Александрович, 2026.
