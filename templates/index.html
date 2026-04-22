@@ -172,21 +172,112 @@
       border: 1px solid #444;
     }
 
-    .delete-btn {
+    .card-actions {
       position: absolute;
       top: 8px; right: 8px;
-      background: rgba(0,0,0,0.7);
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .item-card:hover .card-actions { opacity: 1; }
+
+    .card-actions button {
+      background: rgba(0,0,0,0.75);
       border: none;
       color: #fff;
       border-radius: 6px;
       padding: 4px 8px;
       cursor: pointer;
       font-size: 0.75rem;
-      opacity: 0;
-      transition: opacity 0.2s;
     }
 
-    .item-card:hover .delete-btn { opacity: 1; }
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 28px;
+      width: 360px;
+    }
+
+    .modal h3 { font-size: 1rem; margin-bottom: 20px; }
+
+    .modal label {
+      display: block;
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+
+    .modal input {
+      width: 100%;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .modal input:focus { outline: none; border-color: #6c63ff; }
+
+    .autocomplete-wrap { position: relative; }
+
+    .suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      background: #1e1e1e;
+      border: 1px solid #444;
+      border-radius: 8px;
+      margin-top: 4px;
+      z-index: 200;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .suggestions div {
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: #ddd;
+    }
+
+    .suggestions div:hover, .suggestions div.active { background: #2a2a3a; color: #fff; }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .btn-save { background: #6c63ff; color: #fff; }
+    .btn-cancel { background: #2a2a2a; color: #aaa; }
 
     /* Gaps */
     .gaps-section {
@@ -273,11 +364,27 @@
       border: 1px solid #333;
     }
 
-    .outfit-desc {
-      font-size: 0.85rem;
-      color: #aaa;
-      line-height: 1.5;
+    .outfit-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
     }
+
+    .quality-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .quality-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.8; }
+    .quality-great  { background: #0d2e1a; color: #4ade80; }
+    .quality-good   { background: #1e2a0d; color: #a3e635; }
+    .quality-mixed  { background: #2e1f0a; color: #fb923c; }
 
     .outfit-style-badge {
       display: inline-block;
@@ -286,7 +393,46 @@
       padding: 3px 10px;
       border-radius: 20px;
       font-size: 0.75rem;
-      margin-top: 10px;
+    }
+
+    .occasion-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .occasion-tag {
+      background: #1e1e2e;
+      border: 1px solid #333;
+      color: #ccc;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+    }
+
+    .outfit-vlm-desc {
+      font-size: 0.9rem;
+      color: #e0e0e0;
+      line-height: 1.5;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+
+    .outfit-insight {
+      font-size: 0.82rem;
+      color: #888;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .outfit-tip {
+      font-size: 0.8rem;
+      color: #fb923c;
+      background: #2e1f0a;
+      border-left: 3px solid #fb923c;
+      padding: 6px 10px;
+      border-radius: 0 6px 6px 0;
+      margin-top: 4px;
     }
 
     /* Empty state */
@@ -390,6 +536,27 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3>Редактировать вещь</h3>
+    <input type="hidden" id="edit-id" />
+    <label>Категория</label>
+    <div class="autocomplete-wrap">
+      <input type="text" id="edit-category" placeholder="начни вводить..." autocomplete="off" />
+      <div class="suggestions" id="cat-suggestions"></div>
+    </div>
+    <label>Цвет</label>
+    <div class="autocomplete-wrap">
+      <input type="text" id="edit-color" placeholder="начни вводить..." autocomplete="off" />
+      <div class="suggestions" id="color-suggestions"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Отмена</button>
+      <button class="btn-save" onclick="saveEdit()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const COLOR_MAP = {
     'белый': '#f5f5f5', 'чёрный': '#1a1a1a', 'серый': '#888',
@@ -481,13 +648,16 @@
     grid.innerHTML = items.map(item => `
       <div class="item-card" id="card-${item.id}">
         <img src="/static/uploads/${item.filename}" alt="${item.category}" loading="lazy" />
-        <button class="delete-btn" onclick="deleteItem(${item.id})">✕</button>
+        <div class="card-actions">
+          <button onclick="openEditModal(${item.id}, '${item.category}', '${item.color}')">✏️</button>
+          <button onclick="deleteItem(${item.id})">✕</button>
+        </div>
         <div class="info">
-          <div class="category">${item.category}</div>
+          <div class="category" id="cat-${item.id}">${item.category}</div>
           <div class="meta">
             <span style="display:flex;align-items:center;gap:4px">
-              <span class="color-dot" style="background:${COLOR_MAP[item.color] || '#666'}"></span>
-              ${item.color}
+              <span class="color-dot" id="dot-${item.id}" style="background:${COLOR_MAP[item.color] || '#666'}"></span>
+              <span id="color-${item.id}">${item.color}</span>
             </span>
             <span>${item.style}</span>
           </div>
@@ -542,7 +712,9 @@
         return;
       }
 
-      container.innerHTML = `<div class="outfits-grid">${data.outfits.map((outfit, i) => `
+      container.innerHTML = `<div class="outfits-grid">${data.outfits.map((outfit, i) => {
+        const a = outfit.analysis || {};
+        return `
         <div class="outfit-card">
           <div class="outfit-label">Образ ${i + 1}</div>
           <div class="outfit-items">
@@ -550,10 +722,18 @@
               <img class="outfit-item-thumb" src="/static/uploads/${item.filename}" alt="${item.category}" title="${item.category}" />
             `).join('')}
           </div>
-          <div class="outfit-desc">${outfit.description || ''}</div>
-          <span class="outfit-style-badge">${outfit.style}</span>
-        </div>
-      `).join('')}</div>`;
+          ${outfit.description ? `<div class="outfit-vlm-desc">${outfit.description}</div>` : ''}
+          <div class="outfit-meta">
+            <span class="quality-badge quality-${a.quality_level || 'good'}">${a.quality || ''}</span>
+            <span class="outfit-style-badge">${outfit.style}</span>
+          </div>
+          <div class="occasion-tags">
+            ${(a.occasions || []).map(o => `<span class="occasion-tag">${o}</span>`).join('')}
+          </div>
+          ${a.insight ? `<div class="outfit-insight">${a.insight}</div>` : ''}
+          ${a.tip ? `<div class="outfit-tip">${a.tip}</div>` : ''}
+        </div>`;
+      }).join('')}</div>`;
 
     } catch (e) {
       showToast('Ошибка генерации образов', 'error');
@@ -570,6 +750,105 @@
     if ([2,3,4].includes(mod10) && ![12,13,14].includes(mod100)) return `${n} ${few}`;
     return `${n} ${many}`;
   }
+
+  const ALL_CATEGORIES = [
+    'футболка', 'лонгслив', 'поло', 'рубашка', 'блузка', 'топ', 'боди',
+    'свитер', 'худи', 'толстовка', 'джемпер', 'кардиган', 'водолазка', 'жилет', 'пиджак',
+    'джинсы', 'брюки', 'чиносы', 'шорты', 'бермуды', 'юбка', 'мини-юбка', 'леггинсы', 'спортивные штаны',
+    'пальто', 'куртка', 'пуховик', 'тренч', 'плащ', 'ветровка', 'бомбер', 'парка', 'дублёнка',
+    'платье', 'вечернее платье', 'сарафан', 'комбинезон', 'костюм',
+    'кроссовки', 'туфли', 'ботинки', 'сапоги', 'сандалии', 'шлёпанцы', 'лоферы', 'мокасины', 'балетки', 'угги',
+    'сумка', 'рюкзак', 'клатч', 'ремень', 'шарф', 'шапка', 'кепка', 'панама',
+    'перчатки', 'носки', 'украшения', 'очки', 'галстук', 'часы',
+  ];
+
+  const ALL_COLORS = [
+    'белый', 'чёрный', 'серый', 'синий', 'красный', 'зелёный',
+    'бежевый', 'коричневый', 'розовый', 'жёлтый', 'оранжевый',
+    'бордовый', 'фиолетовый', 'голубой',
+  ];
+
+  function setupAutocomplete(inputId, suggestionsId, options) {
+    const input = document.getElementById(inputId);
+    const box = document.getElementById(suggestionsId);
+
+    input.addEventListener('input', () => {
+      const val = input.value.toLowerCase().trim();
+      box.innerHTML = '';
+      if (!val) { box.style.display = 'none'; return; }
+      const matches = options.filter(o => o.startsWith(val) || o.includes(val));
+      if (!matches.length) { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      matches.forEach(m => {
+        const div = document.createElement('div');
+        div.textContent = m;
+        div.addEventListener('mousedown', () => {
+          input.value = m;
+          box.style.display = 'none';
+        });
+        box.appendChild(div);
+      });
+    });
+
+    input.addEventListener('focus', () => {
+      if (input.value === '') {
+        box.innerHTML = '';
+        options.forEach(m => {
+          const div = document.createElement('div');
+          div.textContent = m;
+          div.addEventListener('mousedown', () => {
+            input.value = m;
+            box.style.display = 'none';
+          });
+          box.appendChild(div);
+        });
+        box.style.display = 'block';
+      }
+    });
+
+    input.addEventListener('blur', () => setTimeout(() => { box.style.display = 'none'; }, 150));
+  }
+
+  setupAutocomplete('edit-category', 'cat-suggestions', ALL_CATEGORIES);
+  setupAutocomplete('edit-color', 'color-suggestions', ALL_COLORS);
+
+  function openEditModal(id, category, color) {
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-category').value = category;
+    document.getElementById('edit-color').value = color;
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+  }
+
+  async function saveEdit() {
+    const id = document.getElementById('edit-id').value;
+    const category = document.getElementById('edit-category').value.trim();
+    const color = document.getElementById('edit-color').value.trim();
+
+    const res = await fetch(`/wardrobe/items/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category, color }),
+    });
+
+    if (res.ok) {
+      document.getElementById(`cat-${id}`).textContent = category;
+      document.getElementById(`color-${id}`).textContent = color;
+      document.getElementById(`dot-${id}`).style.background = COLOR_MAP[color] || '#666';
+      closeEditModal();
+      showToast('✅ Сохранено');
+      loadGaps();
+    } else {
+      showToast('❌ Ошибка сохранения', 'error');
+    }
+  }
+
+  document.getElementById('edit-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+  });
 
   loadWardrobe();
   loadGaps();

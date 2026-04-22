@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.models.database import ClothingItem, get_db
-from app.services.outfit_generator import generate_outfits, describe_outfit
+from app.services.outfit_generator import generate_outfits, analyze_outfit, describe_outfit
 
 router = APIRouter(prefix="/outfits", tags=["outfits"])
 
@@ -28,6 +28,7 @@ async def get_outfits(db: Session = Depends(get_db)):
     outfits = generate_outfits(items_data, max_outfits=3)
 
     for outfit in outfits:
+        outfit["analysis"] = analyze_outfit(outfit)
         outfit["description"] = await describe_outfit(outfit)
 
     return {"outfits": outfits}

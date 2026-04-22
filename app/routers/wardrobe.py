@@ -3,10 +3,12 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from app.models.database import ClothingItem, get_db
-from app.services.classifier import classify_image, analyze_gaps
+from app.services.classifier import classify_image, analyze_gaps, CATEGORY_TO_STYLE, CATEGORY_TO_SEASON
 
 router = APIRouter(prefix="/wardrobe", tags=["wardrobe"])
 
@@ -77,6 +79,27 @@ def get_items(db: Session = Depends(get_db)):
         }
         for item in items
     ]
+
+
+class ItemUpdate(BaseModel):
+    category: Optional[str] = None
+    color: Optional[str] = None
+
+
+@router.patch("/items/{item_id}")
+def update_item(item_id: int, data: ItemUpdate, db: Session = Depends(get_db)):
+    item = db.query(ClothingItem).filter(ClothingItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Вещь не найдена")
+    if data.category is not None:
+        item.category = data.category
+        item.style = CATEGORY_TO_STYLE.get(data.category, item.style)
+        item.season = CATEGORY_TO_SEASON.get(data.category, item.season)
+    if data.color is not None:
+        item.color = data.color
+    db.commit()
+    db.refresh(item)
+    return {"id": item.id, "category": item.category, "color": item.color, "style": item.style, "season": item.season}
 
 
 @router.delete("/items/{item_id}")
