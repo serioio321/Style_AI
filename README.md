@@ -113,6 +113,16 @@ python3 -m uvicorn main:app --reload
 
 ---
 
+## 📸 Скриншоты приложения
+
+**Главная страница**  
+<img src="images_for_readme/main_page.png" alt="Главная страница" width="600">
+
+**Подбор стилей и рекомендации**  
+<img src="images_for_readme/styles_page.png" alt="Страница стилей" width="600">
+
+---
+
 ## Авторы
 
 Букреев Сергей Александрович, 2026.
